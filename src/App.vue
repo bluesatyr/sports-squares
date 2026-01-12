@@ -157,11 +157,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 text-white flex flex-col items-center p-4">
-    <h1 class="text-4xl font-bold mb-8">Super Bowl Squares</h1>
+  <div class="w-7xl bg-gray-900 text-white flex flex-col items-center p-4">
+    <h1 class="text-4xl font-bold mb-8">Rust Reunion Super Bowl Squares</h1>
 
     <!-- Scoreboard -->
-    <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+    <div class="w-full bg-gray-800 p-6 rounded-lg shadow-md mb-8">
       <h2 class="text-2xl font-semibold mb-4">Scoreboard</h2>
       <div class="flex justify-around text-xl">
         <p>Home Score: <span class="font-bold">{{ gameState.home_score }}</span></p>
@@ -171,9 +171,9 @@ onUnmounted(() => {
     </div>
 
     <!-- Squares Grid -->
-    <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-md">
+    <div class="w-full bg-gray-800 p-6 rounded-lg shadow-md">
       <h2 class="text-2xl font-semibold mb-4">Game Grid</h2>
-      <div class="grid grid-cols-11 gap-1 w-full aspect-square max-w-[600px] mx-auto">
+      <div v-if="squares.length === 100" class="grid grid-cols-11 gap-1 w-full aspect-square max-w-[3000px] mx-auto">
         <!-- Top-left empty corner -->
         <div class="p-2"></div>
         
@@ -203,6 +203,9 @@ onUnmounted(() => {
             class="w-full aspect-square"
           />
         </template>
+      </div>
+      <div v-else class="text-center p-8">
+        <p>Loading grid...</p>
       </div>
     </div>
   </div>
