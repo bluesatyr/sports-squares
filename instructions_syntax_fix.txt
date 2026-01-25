@@ -1,0 +1,7 @@
+I have corrected the structural syntax error in `src/composables/useGameData.js`. The `watch` effect, `onMounted`, `onUnmounted` hooks, and the `return` statement were incorrectly nested within another function. I have moved them to their correct top-level position.
+
+This should resolve the `Failed to parse source for import analysis` error.
+
+**Please refresh your browser and confirm if the application loads without this syntax error.**
+
+Once the application is loading correctly, we can proceed with debugging the `startGame` function and its update failure, as well as integrating the game selection dropdown.

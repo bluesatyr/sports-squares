@@ -1,0 +1,1 @@
+ALTER TABLE game_state ADD COLUMN current_quarter INT DEFAULT 0;

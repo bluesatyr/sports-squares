@@ -34,6 +34,11 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-image: url('/bg_lrg.jpg'); /* The background image */
+  background-size: cover; /* Cover the entire element */
+  background-position: bottom center; /* Center the image */
+  background-repeat: no-repeat; /* Do not repeat the image */
+  background-attachment: fixed; /* Keep background fixed while scrolling */
 }
 
 h1 {

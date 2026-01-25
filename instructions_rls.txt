@@ -1,0 +1,24 @@
+The issue of `game_state` not updating (including scores, shuffled scores, and `is_locked` status) is almost certainly due to **Row Level Security (RLS) policies** on your Supabase table.
+
+Your application is sending the correct update requests, but the database is preventing them.
+
+**To debug and fix this, please follow these steps in your Supabase dashboard:**
+
+1.  **Go to the 'Authentication' section**, then navigate to 'Policies'.
+2.  **Select the `game_state` table.**
+3.  **Temporarily disable RLS for the `game_state` table.** This is the fastest way to confirm if RLS is the problem. You can usually find a toggle switch for 'Enable RLS' at the top of the policies page for that table.
+    *   **Alternatively, if you prefer not to fully disable it, ensure there is an 'UPDATE' policy that allows anonymous users (or whatever user role your application is operating as) to update all columns.** A simple policy for testing would be:
+        *   **Name:** "Allow anonymous UPDATE" (or similar)
+        *   **For operations:** `UPDATE`
+        *   **Target Roles:** `anon` (if your app is not authenticating users with Supabase Auth, or `authenticated` if it is)
+        *   **Using a custom SQL expression:** `(true)` (this means "allow all updates")
+
+After making changes to RLS, please:
+
+1.  **Refresh your application** in the browser.
+2.  **Click the 'Start Game (Lock Claiming & Generate Numbers)' button again** from the Admin Dashboard.
+3.  **Check your Supabase dashboard** to see if `home_shuffled_scores` and `away_shuffled_scores` are now populated, and `is_locked` is `true` for your game's `game_state` entry.
+
+If adjusting RLS fixes the issue, then you'll know RLS is the cause. You can then write a more granular and secure RLS policy for `game_state` later.
+
+Please let me know if this helps the `game_state` update succeed!

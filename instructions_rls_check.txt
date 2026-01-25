@@ -1,0 +1,14 @@
+Great that the syntax error is gone! That clears up a major hurdle.
+
+Now, regarding the `game_state` not updating for both 'Start Game' and when fetching ESPN scores: this strongly points to an issue with **Row Level Security (RLS) policies** on your `game_state` table in Supabase. Your application is sending the `UPDATE` requests, but the database is likely rejecting them due to these policies.
+
+I provided detailed instructions on how to check and adjust these policies previously. **It is crucial that you perform these steps.**
+
+**Please confirm:**
+*   Have you gone into your Supabase dashboard, navigated to the `game_state` table policies, and either **temporarily disabled RLS** or added an **UPDATE policy** that allows your application to modify the rows?
+
+If you have adjusted the RLS policies, please try running the 'Start Game' or 'Fetch Live Scores' actions again from the Admin Dashboard, and then:
+1.  **Check your browser's developer console** (usually F12 or Ctrl+Shift+I) for any errors (in red). Since I added more robust error logging, you should see a detailed error object if the Supabase update still fails.
+2.  **Check your Supabase `game_state` table** to see if `is_locked`, `home_shuffled_scores`, `away_shuffled_scores`, `home_score`, `away_score`, or `current_quarter` have been updated.
+
+Let me know the results, especially any console errors if they still occur after adjusting RLS.

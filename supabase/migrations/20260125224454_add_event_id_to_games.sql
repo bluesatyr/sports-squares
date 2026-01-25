@@ -1,0 +1,5 @@
+ALTER TABLE games
+ADD COLUMN event_id TEXT;
+
+ALTER TABLE games
+DROP COLUMN event_id;
