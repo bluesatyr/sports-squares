@@ -54,7 +54,7 @@ const awayTeam = computed(() => {
 
     <!-- Quarter Winners Display -->
      <!-- v-if="quarterWinners && quarterWinners.length > 0" -->
-    <div v-if="quarterWinners && quarterWinners.length > 0" class="mt-6 border-t border-gray-700 pt-4">
+    <div class="mt-6 border-t border-gray-700 pt-4">
       <h3 class="text-xl font-semibold mb-3">Quarter Winners</h3>
       <ul class="space-y-2">
         <li v-for="quarter in quarterWinners" :key="quarter.quarter" class="bg-gray-700 p-3 rounded-md">

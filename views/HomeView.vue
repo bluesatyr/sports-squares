@@ -197,11 +197,11 @@ onUnmounted(() => {
 
 
       <!-- Scoreboard -->
-      <Scoreboard :game="espnGame" :game-state="gameState" :quarter-winners="quarterWinners" />
+      <Scoreboard v-if="!showConfirmSelectionsModal" :game="espnGame" :game-state="gameState" :quarter-winners="quarterWinners" />
 
       <!-- Squares Grid -->
       <!-- New Flex Container for Grid and Home Team Label -->
-      <div class="flex items-center justify-center w-full bg-gray-800 p-6 rounded-lg shadow-md">
+      <div v-if="!showConfirmSelectionsModal" class="flex items-center justify-center w-full bg-gray-800 p-6 rounded-lg shadow-md">
         <!-- Home Team Label -->
         <div v-if="homeTeam.name" class="relative flex items-center justify-center w-8 h-full min-h-[300px]">
           <span class="absolute whitespace-nowrap text-2xl font-bold transform -rotate-90 origin-center left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -258,7 +258,7 @@ onUnmounted(() => {
 
       <!-- Confirm Selections Button -->
       <button
-        v-if="cartSquares.length > 0"
+        v-if="cartSquares.length > 0 && !showConfirmSelectionsModal"
         @click="showConfirmSelectionsModal = true"
         class="mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-lg transition-colors"
       >
