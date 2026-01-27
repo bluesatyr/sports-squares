@@ -7,7 +7,7 @@ import ConfirmSelectionsModal from '../src/components/ConfirmSelectionsModal.vue
 import Scoreboard from '../src/components/Scoreboard.vue' // Import the new Scoreboard component
 import { useGameData } from '../src/composables/useGameData'; // Corrected import path for the useGameData composable
 
-const { gameUUID, gameState, squares, quarterWinners, espnGame, costPerSquare } = useGameData();
+const { gameUUID, gameState, squares, quarterWinners, espnGame, costPerSquare, refreshSquaresForUser } = useGameData();
 
 const currentUserId = ref(null);
 
@@ -20,6 +20,20 @@ const awayScores = ref([])
 const showUsernameModal = ref(false) // Control visibility of the username modal
 const showConfirmSelectionsModal = ref(false) // Control visibility of the confirmation modal
 const cartSquares = ref([]) // Stores IDs of squares temporarily claimed by the user
+
+watch(squares, (newSquares) => {
+  if (currentUserId.value) {
+    cartSquares.value = newSquares
+      .filter(s => s.user_id === currentUserId.value && s.status === 'claimed')
+      .map(s => s.id);
+  }
+}, { deep: true });
+
+const handleUserSession = () => {
+  showUsernameModal.value = false;
+  currentUserId.value = localStorage.getItem('user_id');
+  refreshSquaresForUser();
+};
 
 const currentHomeDigit = computed(() => gameState.value.home_score % 10);
 const currentAwayDigit = computed(() => gameState.value.away_score % 10);
@@ -169,8 +183,11 @@ onUnmounted(() => {
 
 <template>
   <div class="flex flex-col lg:flex-row w-7xl bg-gray-900 text-white items-start p-4 relative">
+    <!-- Username Modal -->
+    <UsernameModal v-if="showUsernameModal" @close="handleUserSession" />
+
     <!-- Main Content Area -->
-    <div class="flex-grow flex flex-col items-center">
+    <div v-if="!showUsernameModal" class="flex-grow flex flex-col items-center">
       <h1 class="text-4xl font-bold mb-8">Rust Reunion Super Bowl Squares</h1>
 
       <!-- Cart Icon -->
@@ -182,9 +199,6 @@ onUnmounted(() => {
           <span v-if="cartSquares.length > 0" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">{{ cartSquares.length }}</span>
         </button>
       </div>
-
-      <!-- Username Modal -->
-      <UsernameModal v-if="showUsernameModal" @close="showUsernameModal = false" />
 
       <!-- Confirm Selections Modal -->
       <ConfirmSelectionsModal

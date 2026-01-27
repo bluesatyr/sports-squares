@@ -105,10 +105,24 @@ const displayText = computed(() => {
   return 'Open';
 });
 
+const tooltipText = computed(() => {
+  if (isClaimedByCurrentUser.value && !isVerified.value) {
+    return 'Claimed';
+  } else if (isClaimedByCurrentUser.value && isVerified.value) {
+    return 'Donation Verified';
+  } else if (isClaimedByOtherUser.value) {
+    return `Claimed by ${props.square.username}`;
+  } else if (props.isGameLocked) {
+    return 'Game Locked';
+  }
+  return 'Available';
+});
+
 </script>
 
 <template>
   <div 
+    :title="tooltipText"
     class="group h-24 w-24 [perspective:1000px] cursor-pointer"
     :class="{ 
       'ring-4 ring-yellow-400 animate-pulse z-10': isWinningSquare,

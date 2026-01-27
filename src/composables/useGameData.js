@@ -349,6 +349,10 @@ export function useGameData() {
     }
   });
 
+  const refreshSquaresForUser = () => {
+    fetchSquares();
+  };
+
   return {
     gameUUID,
     gameState,
@@ -362,5 +366,6 @@ export function useGameData() {
     fetchSquares,
     fetchQuarterWinners,
     fetchEspnData,
+    refreshSquaresForUser,
   };
 }

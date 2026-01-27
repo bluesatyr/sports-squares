@@ -8,7 +8,7 @@
               <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
                 <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">Who are you?</h3>
                 <div class="mt-2">
-                  <p class="text-sm text-gray-500">Please create a username to continue.</p>
+                  <p class="text-sm text-gray-500">Please enter your username to continue. If the username does not exist, a new one will be created.</p>
                   <input v-model="username" type="text" class="mt-2 w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Enter your username">
                 </div>
               </div>
@@ -37,41 +37,45 @@ const saveUsername = async () => {
   }
 
   try {
-    const { data, error } = await supabase
+    // Check if user exists
+    let { data: user, error: fetchError } = await supabase
       .from('users')
-      .insert([{ username: username.value }])
-      .select()
+      .select('id, username, is_admin')
+      .eq('username', username.value)
+      .single()
 
-    if (error) {
-      if (error.code === '23505') { // unique constraint violation
-        alert('Username already exists. Please choose another one.')
-      } else {
+    if (fetchError && fetchError.code !== 'PGRST116') { // Ignore 'not found' errors
+      throw fetchError
+    }
+
+    if (user) {
+      if (user.is_admin) {
+        alert('This user is an admin. You cannot assume their identity.')
+        return
+      }
+      // User exists and is not an admin, assume their identity
+      localStorage.setItem('username', user.username)
+      localStorage.setItem('user_id', user.id)
+      emit('close')
+    } else {
+      // User does not exist, create them
+      const { data, error } = await supabase
+        .from('users')
+        .insert([{ username: username.value }])
+        .select()
+        .single()
+
+      if (error) {
         throw error
       }
-    } else {
-        if (data && data.length > 0) {
-            localStorage.setItem('username', data[0].username)
-            localStorage.setItem('user_id', data[0].id)
-            emit('close')
-        } else {
-            // This case should ideally not be reached if the insert was successful
-            // and `select()` is used. But as a fallback, we can try to fetch the user.
-            const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select('id, username')
-                .eq('username', username.value)
-                .single();
 
-            if(userError) throw userError;
-
-            if(userData){
-                localStorage.setItem('username', userData.username);
-                localStorage.setItem('user_id', userData.id);
-                emit('close');
-            } else {
-                alert('Could not verify user creation. Please try again.')
-            }
-        }
+      if (data) {
+        localStorage.setItem('username', data.username)
+        localStorage.setItem('user_id', data.id)
+        emit('close')
+      } else {
+        alert('Could not create or verify user. Please try again.')
+      }
     }
   } catch (error) {
     console.error('Error saving username:', error)
