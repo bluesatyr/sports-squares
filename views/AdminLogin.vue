@@ -92,7 +92,10 @@ const handleAdminLogin = async () => {
 
   if (passwordMatch) {
     localStorage.setItem('admin_user_id', data.id);
+    localStorage.setItem('user_id', data.id); // Set user_id for general authentication check
     localStorage.setItem('admin_username', data.username);
+    console.log('Login successful! Stored admin_user_id:', data.id);
+    console.log('localStorage admin_user_id after set:', localStorage.getItem('admin_user_id'));
     router.push('/admin/dashboard');
   } else {
     alert('Invalid credentials or not an admin user.');
