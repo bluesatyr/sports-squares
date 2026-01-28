@@ -17,7 +17,7 @@ const currentUserId = ref(null);
 
 const homeScores = ref([])
 const awayScores = ref([])
-const showUsernameModal = ref(false) // Control visibility of the username modal
+const showUsernameModal = ref(!localStorage.getItem('username')) // Control visibility of the username modal
 const showConfirmSelectionsModal = ref(false) // Control visibility of the confirmation modal
 const cartSquares = ref([]) // Stores IDs of squares temporarily claimed by the user
 
@@ -169,10 +169,7 @@ const claimSquare = async (squareId) => { // Removed ownerName parameter
 
 onMounted(async () => {
   currentUserId.value = localStorage.getItem('user_id');
-  // Check if username exists in local storage
-  if (!localStorage.getItem('username')) {
-    showUsernameModal.value = true
-  }
+  console.log('current user id: ', currentUserId.value );
 })
 
 onUnmounted(() => {
