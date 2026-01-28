@@ -51,7 +51,7 @@
 
     <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-md mb-8">
       <h2 class="text-2xl font-semibold mb-4">Approved Selections</h2>
-      <div v-if="approvedSelections.length === 0" class="text-center text-gray-400">
+      <div v-if="approvedSelectionsGrouped.length === 0" class="text-center text-gray-400">
         No approved selections yet.
       </div>
       <div v-else>
@@ -66,23 +66,32 @@
                   Squares
                 </th>
                 <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Cost
+                  Grid Locations
                 </th>
                 <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Verified On
+                  Status
+                </th>
+                <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Total Donation
                 </th>
               </tr>
             </thead>
             <tbody class="bg-gray-800 divide-y divide-gray-700">
-              <tr v-for="selection in approvedSelections" :key="selection.id">
+              <tr v-for="userSelection in approvedSelectionsGrouped" :key="userSelection.userId">
                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">
-                  {{ selection.username }}
+                  {{ userSelection.username }}
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">
-                  {{ selection.squares.length }}
+                  {{ userSelection.numberOfSquares }}
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">
-                  ${{ selection.squares.length * costPerSquare }}
+                  {{ userSelection.gridLocations }}
+                </td>
+                <td class="px-3 py-2 whitespace-nowrap text-sm text-green-400">
+                  {{ userSelection.status }}
+                </td>
+                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">
+                  ${{ userSelection.totalDonation }}
                 </td>
               </tr>
             </tbody>
@@ -299,7 +308,7 @@ const fetchSelections = async () => {
     .from('squares')
     .select('id, user_id, row, col, status, users(username)')
     .eq('game_id', gameUUID.value) // Filter by gameUUID
-    .in('status', ['claimed']) // Fetch only claimed squares
+    .in('status', ['claimed', 'verified']) // Fetch both claimed and verified
 
   if (error) {
     console.error('Error fetching selections:', error);
@@ -313,6 +322,7 @@ const fetchSelections = async () => {
   }));
 
   pendingSelections.value = allSelections.filter(s => s.status === 'claimed');
+  approvedSelections.value = allSelections.filter(s => s.status === 'verified');
   approvedSelections.value = allSelections.filter(s => s.status === 'verified');
 };
 
@@ -430,6 +440,35 @@ const pendingSelectionsGrouped = computed(() => {
     grouped[square.user_id].squares.push(square);
     grouped[square.user_id].totalCost += costPerSquare.value; // Use costPerSquare from composable
   });
+  return Object.values(grouped);
+});
+
+// Group approved selections by user for display
+const approvedSelectionsGrouped = computed(() => {
+  const grouped = {};
+  approvedSelections.value.forEach(square => {
+    if (!grouped[square.user_id]) {
+      grouped[square.user_id] = {
+        userId: square.user_id,
+        username: square.username,
+        squares: [],
+        numberOfSquares: 0,
+        gridLocations: '',
+        status: 'verified',
+      };
+    }
+    grouped[square.user_id].squares.push(square);
+    grouped[square.user_id].numberOfSquares++;
+  });
+  
+  // Format grid locations and calculate total donation
+  Object.values(grouped).forEach(userSelection => {
+    userSelection.gridLocations = userSelection.squares
+      .map(s => getGridLocation(s))
+      .join(', ');
+    userSelection.totalDonation = userSelection.numberOfSquares * costPerSquare.value;
+  });
+
   return Object.values(grouped);
 });
 
