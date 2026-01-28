@@ -48,11 +48,12 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'confirm'])
 
 const totalCost = computed(() => props.numberOfSquares * props.costPerSquare)
 
 const closeModal = () => {
-  emit('close')
+  emit('confirm') // Emit confirm event for parent to handle save
+  emit('close') // Also emit close event
 }
 </script>

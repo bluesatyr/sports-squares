@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue' // Import watch
-// import { supabase } from '../src/supabase' // Removed - handled by composable
+import { supabase } from '../src/supabase' // Import supabase client
 import SquareCard from '../src/components/SquareCard.vue'
 import UsernameModal from '../src/components/UsernameModal.vue' // Import the new modal component
 import ConfirmSelectionsModal from '../src/components/ConfirmSelectionsModal.vue' // Import the confirmation modal component
@@ -20,14 +20,6 @@ const awayScores = ref([])
 const showUsernameModal = ref(!localStorage.getItem('username')) // Control visibility of the username modal
 const showConfirmSelectionsModal = ref(false) // Control visibility of the confirmation modal
 const cartSquares = ref([]) // Stores IDs of squares temporarily claimed by the user
-
-watch(squares, (newSquares) => {
-  if (currentUserId.value) {
-    cartSquares.value = newSquares
-      .filter(s => s.user_id === currentUserId.value && s.status === 'claimed')
-      .map(s => s.id);
-  }
-}, { deep: true });
 
 const handleUserSession = () => {
   showUsernameModal.value = false;
@@ -120,50 +112,105 @@ const awayTeam = computed(() => {
 //   current_quarter: 0,
 // })
 
-const claimSquare = async (squareId) => { // Removed ownerName parameter
+const claimSquare = async (squareId) => {
+  console.log('claimSquare called for squareId:', squareId);
+  console.log('currentUserId.value:', currentUserId.value);
+  console.log('Initial cartSquares.value:', cartSquares.value);
+
   if (!currentUserId.value) {
     alert('Please create a username first!');
     showUsernameModal.value = true; // Show modal if user ID is missing
+    console.log('No currentUserId. Returning.');
     return;
   }
 
   const squareToClaim = squares.value.find(s => s.id === squareId);
+  console.log('squareToClaim:', squareToClaim);
 
   // If square is already in the cart, remove it (unclaim locally)
   if (cartSquares.value.includes(squareId)) {
+    console.log('Square already in cart. Removing.');
     cartSquares.value = cartSquares.value.filter(id => id !== squareId);
     // Optimistically revert local state
     if (squareToClaim) {
         squareToClaim.user_id = null;
         squareToClaim.username = null;
     }
+    console.log('cartSquares.value after removing:', cartSquares.value);
     return;
   }
 
   // If already claimed by someone else, do nothing
   if (squareToClaim && squareToClaim.user_id && squareToClaim.user_id !== currentUserId.value) {
     alert('This square is already claimed by another user.');
+    console.log('Square claimed by another user. Returning.');
     return;
   }
 
   // If already claimed by current user and verified, do nothing
   if (squareToClaim && squareToClaim.user_id === currentUserId.value && squareToClaim.status === 'verified') {
     alert('You have already claimed and verified this square.');
+    console.log('Square claimed by current user and verified. Returning.');
     return;
   }
 
   // Add to cart
   if (!cartSquares.value.includes(squareId)) {
+    console.log('Square not in cart. Adding.');
     cartSquares.value.push(squareId);
     // Optimistically update local state to show it's "in cart"
     if (squareToClaim) {
         squareToClaim.user_id = currentUserId.value; // Temporarily assign current user
         squareToClaim.username = localStorage.getItem('username');
     }
+    console.log('cartSquares.value after adding:', cartSquares.value);
   }
   // The actual update to DB for "claimed" status happens when "Confirm Selections" is clicked.
   // This claimSquare now just manages the cart.
 }
+
+const handleConfirmSelections = async () => {
+  console.log('handleConfirmSelections called.');
+  console.log('Squares to claim:', cartSquares.value);
+  console.log('User ID to assign:', currentUserId.value);
+  console.log('Game UUID:', gameUUID.value);
+
+  if (!currentUserId.value) {
+    alert('User not logged in. Cannot claim squares.');
+    showConfirmSelectionsModal.value = false;
+    return;
+  }
+  if (cartSquares.value.length === 0) {
+    alert('No squares in cart to claim.');
+    showConfirmSelectionsModal.value = false;
+    return;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('squares')
+      .update({
+        status: 'claimed',
+        user_id: currentUserId.value
+      })
+      .in('id', cartSquares.value)
+      .eq('game_id', gameUUID.value);
+
+    if (error) {
+      console.error('Error claiming squares:', error);
+      alert('Failed to claim squares: ' + error.message);
+    } else {
+      alert('Squares claimed successfully!');
+      cartSquares.value = []; // Clear the cart
+      refreshSquaresForUser(); // Refresh the grid to show claimed squares
+    }
+  } catch (err) {
+    console.error('Unexpected error claiming squares:', err);
+    alert('An unexpected error occurred while claiming squares.');
+  } finally {
+    showConfirmSelectionsModal.value = false; // Always close modal
+  }
+};
 
 
 
@@ -180,6 +227,7 @@ onUnmounted(() => {
 
 <template>
   <div class="flex flex-col lg:flex-row w-7xl bg-gray-900 text-white items-start p-4 relative">
+
     <!-- Username Modal -->
     <UsernameModal v-if="showUsernameModal" @close="handleUserSession" />
 
@@ -203,6 +251,7 @@ onUnmounted(() => {
         :number-of-squares="cartSquares.length"
         :cost-per-square="costPerSquare"
         @close="showConfirmSelectionsModal = false"
+        @confirm="handleConfirmSelections"
       />
 
 

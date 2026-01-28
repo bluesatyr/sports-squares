@@ -2,7 +2,7 @@
 import { hashPassword } from './src/utils/auth.js';
 
 async function generateHash() {
-    const plaintextPassword = 'fun@DUN!1'; // The password to hash
+    const plaintextPassword = 'RustReunion2027!'; // The password to hash
 
     try {
         const hashedPassword = await hashPassword(plaintextPassword);
