@@ -189,7 +189,58 @@ export function useGameData() {
         return;
       }
       if (!gameEventId.value) {
-          console.warn('Game Event ID not available, cannot filter ESPN data. Please ensure the selected game in the database has an event_id.');
+          console.warn('Game Event ID not available. Using Super Bowl placeholder data.');
+          espnGame.value = {
+              id: 'super-bowl-placeholder',
+              name: 'Super Bowl (Placeholder)',
+              competitions: [{
+                  competitors: [
+                      {
+                          id: '4', // Patriots ID
+                          type: 'team',
+                          homeAway: 'home',
+                          score: '0',
+                          team: {
+                              id: '4',
+                              displayName: 'New England Patriots',
+                              abbreviation: 'NE',
+                              logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/ne.png',
+                          },
+                      },
+                      {
+                          id: '26', // Seahawks ID
+                          type: 'team',
+                          homeAway: 'away',
+                          score: '0',
+                          team: {
+                              id: '26',
+                              displayName: 'Seattle Seahawks',
+                              abbreviation: 'SEA',
+                              logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/sea.png',
+                          },
+                      },
+                  ],
+                  // Minimal competition details for placeholder
+                  status: {
+                      type: {
+                          name: 'STATUS_SCHEDULED',
+                          detail: 'Super Bowl LXI',
+                          state: 'pre'
+                      },
+                      period: 0,
+                      displayClock: '0:00'
+                  }
+              }],
+              status: {
+                  type: {
+                      name: 'STATUS_SCHEDULED',
+                      detail: 'Super Bowl LXI',
+                      state: 'pre'
+                  },
+                  period: 0,
+                  displayClock: '0:00'
+              }
+          };
           return;
       }
   

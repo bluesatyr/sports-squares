@@ -9,10 +9,17 @@
       </div>
       <div v-else>
         <div v-for="userSelection in pendingSelectionsGrouped" :key="userSelection.userId" class="mb-6 border-b border-gray-700 pb-4">
-          <h3 class="text-xl font-bold mb-2">{{ userSelection.username }}</h3>
-          <p class="text-sm text-gray-300 mb-1">Total Squares: {{ userSelection.squares.length }}</p>
-          <p class="text-sm text-gray-300 mb-1">Total Cost: ${{ userSelection.totalCost }}</p>
-          <p class="text-sm text-gray-300 mb-2">Submitted On: {{ new Date(userSelection.submittedAt).toLocaleString() }}</p>
+          <div class="flex items-center mb-2 w-full">
+            <h3 class="text-xl font-bold mr-4">{{ userSelection.username }}</h3>
+            <p class="text-sm text-gray-300 mr-4">Total Squares: {{ userSelection.squares.length }}</p>
+            <p class="text-sm text-gray-300 mr-auto">Total Cost: ${{ userSelection.totalCost }}</p>
+            <button
+              @click="verifySelections(userSelection.squares.map(s => s.id))"
+              class="ml-auto bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-md text-sm"
+            >
+              Verify Donation
+            </button>
+          </div>
 
           <div class="overflow-x-auto mb-2">
             <table class="min-w-full divide-y divide-gray-700">
@@ -28,22 +35,16 @@
               </thead>
               <tbody class="bg-gray-800 divide-y divide-gray-700">
                 <tr v-for="square in userSelection.squares" :key="square.id">
-                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300 text-left">
                     {{ getGridLocation(square) }}
                   </td>
-                  <td class="px-3 py-2 whitespace-nowrap text-sm text-yellow-400">
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-yellow-400 text-left">
                     {{ square.status }}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <button
-            @click="verifySelections(userSelection.squares.map(s => s.id))"
-            class="mt-2 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-md text-sm"
-          >
-            Verify Donation
-          </button>
         </div>
       </div>
     </div>
@@ -82,9 +83,6 @@
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">
                   ${{ selection.squares.length * costPerSquare }}
-                </td>
-                <td class="px-3 py-2 whitespace-nowrap text-sm text-green-400">
-                  {{ new Date(selection.submittedAt).toLocaleDateString() }}
                 </td>
               </tr>
             </tbody>
@@ -289,24 +287,29 @@ const fetchLiveScores = async () => {
 const fetchSelections = async () => {
   if (!gameUUID.value) {
     console.warn('Game UUID is not available, skipping fetching selections.');
-    return;
+    // Try to fetch gameUUID if not available (this might happen if admin dashboard loads before useGameData fully initializes)
+    await fetchInitialGameSetup();
+    if (!gameUUID.value) {
+        console.warn('Game UUID still not available after retry, cannot fetch selections.');
+        return;
+    }
   }
+  console.log('Fetching selections for gameUUID:', gameUUID.value);
   const { data, error } = await supabase
     .from('squares')
-    .select('id, user_id, x_coord, y_coord, status, created_at, users(username)')
+    .select('id, user_id, row, col, status, users(username)')
     .eq('game_id', gameUUID.value) // Filter by gameUUID
-    .in('status', ['claimed', 'verified']) // Fetch both claimed and verified
-    .order('created_at', { ascending: true });
+    .in('status', ['claimed']) // Fetch only claimed squares
 
   if (error) {
     console.error('Error fetching selections:', error);
     return;
   }
+  console.log('Raw selections data from Supabase:', data);
 
   const allSelections = data.map(s => ({
     ...s,
     username: s.users ? s.users.username : 'Unknown User',
-    submittedAt: s.created_at
   }));
 
   pendingSelections.value = allSelections.filter(s => s.status === 'claimed');
@@ -422,7 +425,6 @@ const pendingSelectionsGrouped = computed(() => {
         username: square.username,
         squares: [],
         totalCost: 0,
-        submittedAt: square.submittedAt, // Take the first square's submittedAt for the group
       };
     }
     grouped[square.user_id].squares.push(square);
@@ -433,8 +435,8 @@ const pendingSelectionsGrouped = computed(() => {
 
 
 const getGridLocation = (square) => {
-  const colChar = String.fromCharCode(65 + square.y_coord); // A-J for 0-9
-  const rowNum = square.x_coord + 1; // 1-10 for 0-9
+  const colChar = String.fromCharCode(65 + square.col); // A-J for 0-9
+  const rowNum = square.row + 1; // 1-10 for 0-9
   return `${colChar}${rowNum}`;
 };
 
@@ -495,8 +497,8 @@ const logout = () => {
   router.push('/admin/login');
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchInitialGameSetup(); // Ensure game data, including gameUUID, is fetched first
   fetchSelections();
-  fetchInitialGameSetup(); // Fetch game data via composable
 });
 </script>

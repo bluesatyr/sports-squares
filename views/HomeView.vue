@@ -236,7 +236,7 @@ onUnmounted(() => {
               v-for="(label, index) in (gameState.is_locked && gameState.away_shuffled_scores && gameState.away_shuffled_scores.length > 0 ? gameState.away_shuffled_scores : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])"
               :key="'away-label-' + index"
               class="text-center font-bold p-2 rounded flex items-center justify-center"
-              :class="{ 'bg-yellow-400 text-gray-900': (gameState.away_score % 10 === label) }"
+              :class="{ 'bg-yellow-400 text-gray-900': (gameState.value?.current_quarter > 0 && gameState.away_score % 10 === label) }"
             >
               {{ label }}
             </div>
@@ -246,7 +246,7 @@ onUnmounted(() => {
               <!-- Left Column Labels (Home Scores) -->
               <div
                             class="text-center font-bold p-2 rounded flex items-center justify-center"
-                            :class="{ 'bg-yellow-400 text-gray-900': (gameState.home_score % 10 === (gameState.is_locked && gameState.home_shuffled_scores && gameState.home_shuffled_scores.length > 0 ? gameState.home_shuffled_scores[r - 1] : r)) }"
+                            :class="{ 'bg-yellow-400 text-gray-900': (gameState.value?.current_quarter > 0 && gameState.home_score % 10 === (gameState.is_locked && gameState.home_shuffled_scores && gameState.home_shuffled_scores.length > 0 ? gameState.home_shuffled_scores[r - 1] : r)) }"
                           >              {{ gameState.is_locked && gameState.home_shuffled_scores && gameState.home_shuffled_scores.length > 0 ? gameState.home_shuffled_scores[r - 1] : r }}
               </div>
               <SquareCard
@@ -255,7 +255,7 @@ onUnmounted(() => {
                 :square="squares[(r - 1) * 10 + (c - 1)]"
                 :current-user-id="currentUserId"
                 :is-game-locked="gameState.is_locked"
-                :is-current-score-square="currentHomeRowIndex === (r - 1) && currentAwayColumnIndex === (c - 1)"
+                :is-current-score-square="gameState.value?.current_quarter > 0 && currentHomeRowIndex === (r - 1) && currentAwayColumnIndex === (c - 1)"
                 @claim="claimSquare"
                 class="w-full aspect-square"
               />
