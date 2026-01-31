@@ -8,14 +8,7 @@
               <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
                 <h3 class="text-xl font-semibold leading-6 text-gray-900" id="modal-title">🏈 How to Play Super Bowl Squares</h3>
                 <div class="mt-4 space-y-4 text-base text-gray-800">
-                  <p class="font-semibold text-gray-900">How to Play:</p>
-                  <ul class="list-decimal list-inside space-y-2 pl-4">
-                    <li>Pick a square on the grid.</li>
-                    <li>Click the shopping cart icon <font-awesome-icon icon="fa-solid fa-cart-shopping" class="h-4 w-4 inline-block align-text-bottom" /> in the top-right to review your selections and follow payment instructions.</li>
-                    <li>Once payment is received, an admin will verify your squares.</li>
-                  </ul>
-
-                  <p class="font-semibold text-gray-900 pt-4">How to Win:</p>
+                  <p class="font-semibold text-gray-900">The Game Explained:</p>
                   <ol class="list-decimal list-inside space-y-2 pl-4">
                     <li>At the beginning of the game, numbers (0-9) are randomly assigned to each row and column, corresponding to the last digit of each team's score.</li>
                     <li>At the end of every quarter, look at the last number of each team's score.
@@ -28,6 +21,13 @@
                     <li>Find where the two score numbers meet on the grid. If that’s your square, you win a prize!</li>
                   </ol>
                   <p class="pl-4">Example: If the score is Home 17 and Away 10, the winning square is Home 7 and Away 0.</p>
+
+                  <p class="font-semibold text-gray-900 pt-4">Getting Your Squares:</p>
+                  <ul class="list-decimal list-inside space-y-2 pl-4">
+                    <li>Pick a square on the grid.</li>
+                    <li>Click the shopping cart icon <font-awesome-icon icon="fa-solid fa-cart-shopping" class="h-4 w-4 inline-block align-text-bottom" /> in the top-right to review your selections and follow payment instructions.</li>
+                    <li>Once payment is received, an admin will verify your squares.</li>
+                  </ul>
 
                   <p class="font-semibold text-gray-900 pt-4">Good luck!</p>
                 </div>
