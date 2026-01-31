@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue' // Import watch
+import { useRouter } from 'vue-router'; // Import useRouter
 import { supabase } from '../src/supabase' // Import supabase client
 import SquareCard from '../src/components/SquareCard.vue'
 import UsernameModal from '../src/components/UsernameModal.vue' // Import the new modal component
@@ -8,9 +9,19 @@ import Scoreboard from '../src/components/Scoreboard.vue' // Import the new Scor
 import InstructionsModal from '../src/components/InstructionsModal.vue' // Import the instructions modal
 import { useGameData } from '../src/composables/useGameData'; // Corrected import path for the useGameData composable
 
+const router = useRouter(); // Initialize router
 const { gameUUID, gameState, squares, quarterWinners, espnGame, costPerSquare, refreshSquaresForUser } = useGameData();
 
 const currentUserId = ref(null);
+
+const logout = () => {
+  localStorage.removeItem('user_id');
+  localStorage.removeItem('username');
+  router.push('/');
+  // Optionally, re-fetch game data or clear local state if needed after logout
+  // For now, simply reloading the page will handle re-initialization
+  window.location.reload(); 
+};
 
 // const squares = ref([]) // Removed - handled by composable
 // const espnGame = ref(null); // Removed - handled by composable
@@ -258,7 +269,13 @@ onUnmounted(() => {
       <h1 class="text-4xl font-bold mb-8">Rust Reunion Super Bowl Squares</h1>
 
       <!-- Cart Icon -->
-      <div v-if="!showConfirmSelectionsModal" class="absolute top-4 right-4 z-20">
+      <div class="absolute top-4 right-4 flex space-x-2 z-20">
+        <button
+          @click="logout"
+          class="p-2 rounded-full bg-red-600 hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white text-white text-sm"
+        >
+          Logout
+        </button>
         <button @click="showConfirmSelectionsModal = true" class="relative p-2 rounded-full bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white">
           <font-awesome-icon icon="fa-solid fa-cart-shopping" class="w-6 h-6" />
           <span v-if="cartSquares.length > 0" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">{{ cartSquares.length }}</span>

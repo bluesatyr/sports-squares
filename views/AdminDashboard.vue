@@ -133,6 +133,44 @@
       </button>
     </div>
 
+    <!-- Manual Quarter Winner Input -->
+    <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-md mt-8">
+      <h2 class="text-2xl font-semibold mb-4">Manually Record Quarter Winner</h2>
+      <div class="flex flex-col md:flex-row gap-4 mb-4">
+        <div class="flex-1">
+          <label for="manual-quarter" class="block text-gray-300 text-sm font-bold mb-2">Quarter:</label>
+          <input
+            type="number"
+            id="manual-quarter"
+            v-model.number="manualQuarterInput"
+            min="1"
+            max="4"
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600"
+            placeholder="1-4"
+          />
+        </div>
+        <div class="flex-1">
+          <label for="manual-winner" class="block text-gray-300 text-sm font-bold mb-2">Player:</label>
+          <select
+            id="manual-winner"
+            v-model="selectedManualWinnerUserId"
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600"
+          >
+            <option value="" disabled>Select a player</option>
+            <option v-for="user in availableUsers" :key="user.id" :value="user.id">
+              {{ user.username }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <button
+        @click="recordManualQuarterWinner"
+        class="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg text-lg shadow-lg transition-colors w-full"
+      >
+        Record Manual Winner
+      </button>
+    </div>
+
     <!-- Live Score Fetching Section -->
     <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-md mb-8">
       <h2 class="text-2xl font-semibold mb-4">Live Score Control</h2>
@@ -171,6 +209,11 @@ import { shuffleArray } from '../src/utils/index'; // Import shuffleArray utilit
 const router = useRouter();
 const pendingSelections = ref([]);
 const approvedSelections = ref([]);
+const availableUsers = ref([]); // New ref to store unique users for manual winner selection
+
+// Refs for manual quarter winner input
+const manualQuarterInput = ref(null);
+const selectedManualWinnerUserId = ref('');
 
 const { gameUUID, gameState, espnGame, costPerSquare, allGames, selectedGameId, fetchEspnData, fetchInitialGameSetup } = useGameData();
 
@@ -191,6 +234,68 @@ console.log('AdminDashboard - !gameState.is_locked for button:', !gameState.valu
 // fetchGameState and createInitialGameState are now handled by useGameData composable
 // const fetchGameState = async () => { /* ... */ };
 // const createInitialGameState = async () => { /* ... */ };
+
+const recordManualQuarterWinner = async () => {
+  if (!gameUUID.value) {
+    alert('Game UUID is not available. Please ensure a game is configured.');
+    return;
+  }
+  if (!manualQuarterInput.value || manualQuarterInput.value < 1 || manualQuarterInput.value > 4) {
+    alert('Please enter a valid quarter number (1-4).');
+    return;
+  }
+  if (!selectedManualWinnerUserId.value) {
+    alert('Please select a winning player.');
+    return;
+  }
+
+  const confirmMessage = `Are you sure you want to manually record Quarter ${manualQuarterInput.value} winner as ${availableUsers.value.find(u => u.id === selectedManualWinnerUserId.value)?.username}?`;
+
+  if (confirm(confirmMessage)) {
+    try {
+      const { error: insertError } = await supabase
+        .from('quarter_winners')
+        .insert([
+          {
+            game_id: gameUUID.value,
+            quarter: manualQuarterInput.value,
+            winning_user_id: selectedManualWinnerUserId.value,
+            home_score_at_quarter_end: gameState.value.home_score, // Use current scores for manual entry
+            away_score_at_quarter_end: gameState.value.away_score, // Use current scores for manual entry
+          },
+        ]);
+
+      if (insertError) {
+        if (insertError.code === '23505') { // Unique constraint violation
+          alert(`Quarter ${manualQuarterInput.value} results already recorded. If you need to change, please delete the existing entry directly in Supabase.`);
+        } else {
+          throw insertError;
+        }
+      } else {
+        alert(`Manual winner for Quarter ${manualQuarterInput.value} recorded successfully!`);
+        // Optionally update game state to advance quarter if this is the next logical quarter
+        if (manualQuarterInput.value > gameState.value.current_quarter) {
+            const { error: updateError } = await supabase
+              .from('game_state')
+              .update({ current_quarter: manualQuarterInput.value })
+              .eq('game_id', gameUUID.value);
+
+            if (updateError) {
+              console.error('Error updating game_state after manual winner:', updateError);
+              // Do not block success message for quarter winner, but alert about state update issue
+              alert('Quarter winner recorded, but failed to update current game quarter.');
+            }
+        }
+        fetchInitialGameSetup(); // Refresh game state and selections
+        manualQuarterInput.value = null; // Clear input
+        selectedManualWinnerUserId.value = ''; // Clear selection
+      }
+    } catch (error) {
+      console.error('Error recording manual quarter winner:', error);
+      alert('An error occurred while recording the manual winner. Please check console for details.');
+    }
+  }
+};
 
 const startGame = async () => {
   if (!gameUUID.value) {
@@ -323,7 +428,16 @@ const fetchSelections = async () => {
 
   pendingSelections.value = allSelections.filter(s => s.status === 'claimed');
   approvedSelections.value = allSelections.filter(s => s.status === 'verified');
-  approvedSelections.value = allSelections.filter(s => s.status === 'verified');
+  // approvedSelections.value = allSelections.filter(s => s.status === 'verified'); // This line was redundant, removed.
+
+  // Populate availableUsers for manual winner selection
+  const uniqueUsers = new Map();
+  allSelections.forEach(selection => {
+    if (selection.user_id && selection.username && !uniqueUsers.has(selection.user_id)) {
+      uniqueUsers.set(selection.user_id, { id: selection.user_id, username: selection.username });
+    }
+  });
+  availableUsers.value = Array.from(uniqueUsers.values());
 };
 
 const endQuarter = async () => {

@@ -29,6 +29,10 @@
                       <span class="font-semibold text-gray-900">Zelle:</span>
                       <span class="text-gray-700 ml-2">541-941-5758</span>
                     </div>
+                    <div>
+                      <span class="font-semibold text-gray-900">If you would like to send a check text Lori Evans-Duval at</span>
+                      <span class="text-gray-700 ml-2">541-941-5758</span>
+                    </div>
                   </div>
                 </div>
               </div>
