@@ -48,13 +48,18 @@ h1 {
 
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid #4a4a4a; /* Dark grey border */
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
+  background-color: #e0e0e0; /* Light grey background */
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s, color 0.25s; /* Add background-color and color to transition */
+  color: #000000; /* Black text */
+}
+button:hover {
+  background-color: #cccccc; /* Slightly darker light grey on hover */
 }
 button:focus,
 button:focus-visible {
