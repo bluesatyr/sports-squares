@@ -5,6 +5,7 @@ import SquareCard from '../src/components/SquareCard.vue'
 import UsernameModal from '../src/components/UsernameModal.vue' // Import the new modal component
 import ConfirmSelectionsModal from '../src/components/ConfirmSelectionsModal.vue' // Import the confirmation modal component
 import Scoreboard from '../src/components/Scoreboard.vue' // Import the new Scoreboard component
+import InstructionsModal from '../src/components/InstructionsModal.vue' // Import the instructions modal
 import { useGameData } from '../src/composables/useGameData'; // Corrected import path for the useGameData composable
 
 const { gameUUID, gameState, squares, quarterWinners, espnGame, costPerSquare, refreshSquaresForUser } = useGameData();
@@ -17,14 +18,34 @@ const currentUserId = ref(null);
 
 const homeScores = ref([])
 const awayScores = ref([])
-const showUsernameModal = ref(!localStorage.getItem('username')) // Control visibility of the username modal
+const showUsernameModal = ref(!localStorage.getItem('username') && !localStorage.getItem('admin_username')) // Control visibility of the username modal
 const showConfirmSelectionsModal = ref(false) // Control visibility of the confirmation modal
+const showInstructionsModal = ref(false) // Control visibility of the instructions modal
 const cartSquares = ref([]) // Stores IDs of squares temporarily claimed by the user
 
-const handleUserSession = () => {
+const handleUserSession = async () => {
   showUsernameModal.value = false;
-  currentUserId.value = localStorage.getItem('user_id');
+  currentUserId.value = localStorage.getItem('admin_user_id') || localStorage.getItem('user_id');
   refreshSquaresForUser();
+
+  // Check if the user has any squares
+  if (currentUserId.value) {
+    const { data, error } = await supabase
+      .from('squares')
+      .select('id')
+      .eq('user_id', currentUserId.value)
+      .in('status', ['claimed', 'verified']);
+
+    if (error) {
+      console.error("Error fetching user's squares:", error);
+      return;
+    }
+
+    if (data.length === 0) {
+      // This is a new user with no squares, show the modal.
+      showInstructionsModal.value = true;
+    }
+  }
 };
 
 const currentHomeDigit = computed(() => gameState.value.home_score % 10);
@@ -165,7 +186,7 @@ const claimSquare = async (squareId) => {
     }
     console.log('cartSquares.value after adding:', cartSquares.value);
   }
-  // The actual update to DB for "claimed" status happens when "Confirm Selections" is clicked.
+  // The actual update to DB for "claimed" a status happens when "Confirm Selections" is clicked.
   // This claimSquare now just manages the cart.
 }
 
@@ -215,14 +236,12 @@ const handleConfirmSelections = async () => {
 
 
 onMounted(async () => {
-  currentUserId.value = localStorage.getItem('user_id');
-  console.log('current user id: ', currentUserId.value );
+  handleUserSession();
 })
 
 onUnmounted(() => {
   // All subscriptions and intervals are now managed within useGameData composable
 })
-
 </script>
 
 <template>
@@ -231,16 +250,17 @@ onUnmounted(() => {
     <!-- Username Modal -->
     <UsernameModal v-if="showUsernameModal" @close="handleUserSession" />
 
+    <!-- Instructions Modal -->
+    <InstructionsModal v-if="showInstructionsModal" @close="showInstructionsModal = false" />
+
     <!-- Main Content Area -->
     <div v-if="!showUsernameModal" class="flex-grow flex flex-col items-center">
       <h1 class="text-4xl font-bold mb-8">Rust Reunion Super Bowl Squares</h1>
 
       <!-- Cart Icon -->
-      <div class="absolute top-4 right-4 z-20">
+      <div v-if="!showConfirmSelectionsModal" class="absolute top-4 right-4 z-20">
         <button @click="showConfirmSelectionsModal = true" class="relative p-2 rounded-full bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-            <path fill-rule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.76.756-1.76 1.718v5.318a3.001 3.001 0 0 0 2.652 2.92L6.774 18.75H16.5a2.25 2.25 0 0 0 2.25-2.25v-10.5a2.25 2.25 0 0 0-2.25-2.25H7.5ZM14.25 12a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM10.5 1.5H11.25V6H10.5V1.5ZM9.75 12a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM6 12a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM12 2.25a.75.75 0 0 0-.75.75V6h1.5V3a.75.75 0 0 0-.75-.75Zm6.75 9a.75.75 0 0 0-1.5 0v.75a.75.75 0 0 0 1.5 0v-.75ZM12 9a.75.75 0 0 0-.75.75V12a.75.75 0 0 0 1.5 0V9.75a.75.75 0 0 0-.75-.75Z" clip-rule="evenodd" />
-          </svg>
+          <font-awesome-icon icon="fa-solid fa-cart-shopping" class="w-6 h-6" />
           <span v-if="cartSquares.length > 0" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">{{ cartSquares.length }}</span>
         </button>
       </div>

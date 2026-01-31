@@ -159,7 +159,7 @@ const tooltipText = computed(() => {
 
       <!-- Back face (claim button) -->
       <div 
-        class="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-blue-600 rounded-lg shadow-md flex items-center justify-center p-2"
+        class="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-indigo-300 rounded-lg shadow-md flex items-center justify-center p-2"
       >
         <div class="flex flex-col items-center gap-1">
           <template v-if="shouldShowClaimButton">

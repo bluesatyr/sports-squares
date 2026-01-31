@@ -36,19 +36,33 @@ router.beforeEach((to, from, next) => {
   console.log('--- Router Guard ---');
   console.log('To:', to.path, 'From:', from.path);
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  const isAdmin = to.matched.some(record => record.meta.isAdmin);
-  const isLoggedIn = localStorage.getItem('user_id'); // Or admin_user_id for admin login
-  const isAdminLoggedIn = localStorage.getItem('admin_user_id'); // Placeholder for admin login
-  console.log('Requires Auth:', requiresAuth, 'Is Admin Route:', isAdmin);
-  console.log('isLoggedIn (user_id):', isLoggedIn);
-  console.log('isAdminLoggedIn (admin_user_id):', isAdminLoggedIn);
+  const isAdminRoute = to.matched.some(record => record.meta.isAdmin);
+  
+  const regularUserId = localStorage.getItem('user_id');
+  const adminUserId = localStorage.getItem('admin_user_id');
+  const adminUsername = localStorage.getItem('admin_username');
 
-  if (requiresAuth && !isLoggedIn) {
-    console.log('Redirecting to / (requiresAuth && !isLoggedIn)');
-    next('/'); // Redirect to home if auth is required but user not logged in
-  } else if (isAdmin && !isAdminLoggedIn) {
-    console.log('Redirecting to /admin/login (isAdmin && !isAdminLoggedIn)');
-    next('/admin/login'); // Redirect to admin login if admin is required but not logged in
+  // A user is considered generally logged in if they have a regular user ID OR valid admin credentials
+  const isUserGenerallyLoggedIn = regularUserId || (adminUserId && adminUsername); 
+  
+  // Admin is specifically logged in if they have both adminUserId and adminUsername
+  const isAdminSpecificallyLoggedIn = adminUserId && adminUsername; 
+
+  console.log('Requires Auth (general):', requiresAuth);
+  console.log('Is Admin Route:', isAdminRoute);
+  console.log('Regular User ID:', regularUserId);
+  console.log('Admin User ID:', adminUserId);
+  console.log('Admin Username:', adminUsername);
+  console.log('Is User Generally Logged In:', isUserGenerallyLoggedIn);
+  console.log('Is Admin Specifically Logged In:', isAdminSpecificallyLoggedIn);
+
+
+  if (requiresAuth && !isUserGenerallyLoggedIn) {
+    console.log('Redirecting to / (requiresAuth && !isUserGenerallyLoggedIn)');
+    next('/'); 
+  } else if (isAdminRoute && !isAdminSpecificallyLoggedIn) {
+    console.log('Redirecting to /admin/login (isAdminRoute && !isAdminSpecificallyLoggedIn)');
+    next('/admin/login'); 
   } else {
     console.log('Proceeding to route.');
     next();
