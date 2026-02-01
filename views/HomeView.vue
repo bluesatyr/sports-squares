@@ -104,6 +104,18 @@ const awayTeam = computed(() => {
   const away = espnGame.value.competitions[0].competitors.find(t => t.homeAway === 'away');
   return away ? getTeamInfo(away) : {};
 });
+
+const totalRaised = computed(() => {
+  const verifiedSquares = squares.value.filter(s => s.status === 'verified');
+  return verifiedSquares.length * costPerSquare.value;
+});
+
+const progressBarWidth = computed(() => {
+  const maxRaised = 1000; // The goal is $1000
+  const percentage = (totalRaised.value / maxRaised) * 100;
+  return `${Math.min(percentage, 100)}%`; // Cap at 100%
+});
+
 // const gameUUID = ref(null); // Removed - handled by composable
 
 // const quarterWinners = ref([]); // Removed - handled by composable
@@ -266,7 +278,20 @@ onUnmounted(() => {
 
     <!-- Main Content Area -->
     <div v-if="!showUsernameModal" class="flex-grow flex flex-col items-center">
-      <h1 class="text-4xl font-bold mb-8">Rust Reunion Super Bowl Squares</h1>
+      <h1 class="text-4xl font-bold mb-4">Rust Reunion Super Bowl Squares</h1>
+
+      <!-- Total Raised Progress Bar -->
+      <div class="w-full max-w-md mb-8">
+        <div class="block text-2xl font-medium text-yellow-400 mb-2">Total Raised: ${{ totalRaised.toFixed(2) }}</div>
+        <div class="flex items-center justify-between mt-1">
+          <span class="text-yellow-400 mr-2 text-lg">$0</span>
+          <div class="flex-grow bg-gray-700 h-6">
+            <div class="bg-yellow-400 h-6" :style="{ width: progressBarWidth }"></div>
+          </div>
+          <span class="text-yellow-400 ml-2 text-lg">$1000</span>
+        </div>
+      </div>
+
 
       <!-- Cart Icon -->
       <div class="absolute top-4 right-4 flex space-x-2 z-20">
