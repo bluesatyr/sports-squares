@@ -100,7 +100,8 @@ const shouldShowClaimButton = computed(() => {
 // Display logic for the square content
 const displayText = computed(() => {
   if (isClaimed.value) {
-    return props.square.username || 'Claimed'; // Assuming square object will have username populated from join
+    const username = props.square.username || 'Claimed';
+    return username.length > 10 ? username.substring(0, 10) + '...' : username;
   }
   return 'Open';
 });
@@ -154,7 +155,7 @@ const tooltipText = computed(() => {
           'bg-slate-700': !isClaimed // Default for unclaimed
         }"
       >
-        <span class="text-white font-bold">{{ displayText }}</span>
+        <span class="text-white font-bold text-xs break-words text-wrap">{{ displayText }}</span>
       </div>
 
       <!-- Back face (claim button) -->
