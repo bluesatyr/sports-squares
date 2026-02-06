@@ -224,7 +224,7 @@ export function useGameData() {
                   status: {
                       type: {
                           name: 'STATUS_SCHEDULED',
-                          detail: 'Super Bowl LXI',
+                          detail: 'Super Bowl LX',
                           state: 'pre'
                       },
                       period: 0,
@@ -234,7 +234,7 @@ export function useGameData() {
               status: {
                   type: {
                       name: 'STATUS_SCHEDULED',
-                      detail: 'Super Bowl LXI',
+                      detail: 'Super Bowl LX',
                       state: 'pre'
                   },
                   period: 0,
